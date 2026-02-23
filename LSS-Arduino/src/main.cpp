@@ -247,10 +247,22 @@ void loop()
         if (state == RADIOLIB_ERR_NONE) {
             len = radio.getPacketLength();
             PacketType ptype;
-            if (lss_detect_packet(rx_buf, len, &ptype)) {
+
+            // Try to detect the packet at offset 0 (raw LSS frame, node-to-node).
+            // If that fails, retry at offset 4: adafruit_rfm9x on the base station
+            // prepends a 4-byte RadioHead header [dest, node, id, flags] that the
+            // Arduino did not send and we must skip before parsing.
+            const uint8_t *parse_buf = rx_buf;
+            size_t parse_len = len;
+            if (!lss_detect_packet(rx_buf, len, &ptype) && len > 4) {
+                parse_buf = rx_buf + 4;
+                parse_len = len - 4;
+            }
+
+            if (lss_detect_packet(parse_buf, parse_len, &ptype)) {
                 if (ptype == PACKET_CONFIG) {
                     CommandPacket cmd;
-                    if (lss_deserialize_command(rx_buf, len, &cmd)) {
+                    if (lss_deserialize_command(parse_buf, parse_len, &cmd)) {
                         if (cmd.targetSensorId == cfg.nodeId ||
                             cmd.targetSensorId == 255) {
                             // Process command and send ACK

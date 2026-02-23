@@ -71,7 +71,7 @@ class LoRaManager:
         self._alerts = alert_manager
         self._radio = None
         self._running = False
-        self._last_time_sync = 0.0
+        self._last_time_sync = time.time()  # avoid spurious sync on first loop tick
         self._rx_thread: Optional[threading.Thread] = None
         self._tx_thread: Optional[threading.Thread] = None
 
@@ -152,6 +152,10 @@ class LoRaManager:
             self._radio.destination = cfg.NODE_ID_BROADCAST
             # Sync word: 0x12 + (network_id % 244)
             self._radio.sync_word = 0x12 + (network_id % 244)
+            # Promiscuous mode: accept packets regardless of RadioHead dest byte.
+            # RadioLib (Arduino) sends raw packets with no RadioHead header, so
+            # packet[0] will be our LSS sync byte, not a RadioHead address.
+            self._radio.promiscuous = True
             logger.info("RFM95W initialised on %.1f MHz", self._radio.frequency_mhz)
         except Exception as exc:  # pylint: disable=broad-except
             logger.error("Radio init failed: %s", exc)
@@ -168,7 +172,12 @@ class LoRaManager:
                 time.sleep(0.1)
                 continue
             try:
-                raw = self._radio.receive(timeout=0.5, with_header=False)
+                # with_header=True returns the full buffer including any
+                # RadioHead header bytes that adafruit_rfm9x prepends/strips.
+                # Because Arduino (RadioLib) sends raw packets with no header,
+                # the library in non-header mode would silently strip 4 bytes
+                # we didn't add; requesting the header gives us the real bytes.
+                raw = self._radio.receive(timeout=0.5, with_header=True)
             except Exception as exc:  # pylint: disable=broad-except
                 logger.error("Radio receive error: %s", exc)
                 time.sleep(1)
@@ -299,7 +308,14 @@ class LoRaManager:
             cmd = self._rc.next_due()
             if cmd and self._radio is not None:
                 try:
-                    self._radio.send(cmd.raw_packet)
+                    # Set the RadioHead destination byte to the target node ID.
+                    # adafruit_rfm9x prepends [dest, node, id, flags] on TX;
+                    # the Arduino offset-4 fallback strips these before parsing.
+                    self._radio.send(
+                        cmd.raw_packet,
+                        destination=cmd.node_id,
+                        node=cfg.BASE_STATION_ID,
+                    )
                     self._rc.mark_sent(cmd.sequence_number)
                     logger.debug(
                         "Sent %s → node %d (seq %d, attempt %d)",
