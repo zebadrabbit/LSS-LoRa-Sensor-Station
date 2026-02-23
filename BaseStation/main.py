@@ -22,6 +22,8 @@ from lss_basestation.web.app import create_app
 
 def _configure_logging() -> None:
     """Set up root logger to write to stdout and to a rotating file."""
+    level_name = os.environ.get("LOG_LEVEL", "INFO").upper()
+    level = getattr(logging, level_name, logging.INFO)
     os.makedirs(os.path.dirname(cfg.LOG_PATH), exist_ok=True)
     handlers: list[logging.Handler] = [logging.StreamHandler(sys.stdout)]
     try:
@@ -35,7 +37,7 @@ def _configure_logging() -> None:
         print(f"Warning: could not open log file: {exc}", file=sys.stderr)
 
     logging.basicConfig(
-        level=logging.INFO,
+        level=level,
         format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
         handlers=handlers,
