@@ -1,0 +1,14 @@
+# LSS Base Station Python dependencies
+
+flask>=3.0
+paho-mqtt>=2.0
+requests>=2.31
+
+# Raspberry Pi / CircuitPython hardware drivers (Pi only)
+# Uncomment when deploying to the Raspberry Pi:
+# adafruit-circuitpython-rfm9x>=2.4
+# RPi.GPIO>=0.7
+
+# Development / testing
+pytest>=8.0
+pytest-cov>=5.0

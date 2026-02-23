@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="refresh" content="30">
+<title>LSS — Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, sans-serif; background: #0f172a; color: #e2e8f0; }
+  header { background: #1e293b; border-bottom: 1px solid #334155; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+  header h1 { margin: 0; font-size: 1.2rem; color: #38bdf8; }
+  header nav a { color: #94a3b8; text-decoration: none; margin-left: 1.25rem; font-size: .875rem; }
+  header nav a:hover { color: #e2e8f0; }
+  main { padding: 1.5rem; max-width: 1200px; margin: 0 auto; }
+  h2 { margin: 0 0 1rem; font-size: 1rem; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 1.25rem; }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+  .node-id { font-size: 1.5rem; font-weight: 700; color: #38bdf8; }
+  .badge { font-size: .75rem; padding: .2em .6em; border-radius: 999px; font-weight: 600; }
+  .badge-online { background: #16a34a; color: #fff; }
+  .badge-offline { background: #6b7280; color: #fff; }
+  .meta { font-size: .8rem; color: #64748b; margin-bottom: .75rem; }
+  .values table { width: 100%; border-collapse: collapse; }
+  .values td { padding: .25rem .1rem; font-size: .875rem; }
+  .values td:last-child { text-align: right; color: #7dd3fc; font-family: monospace; }
+  .battery-bar { height: 6px; background: #334155; border-radius: 3px; margin: .75rem 0 .25rem; overflow: hidden; }
+  .battery-fill { height: 100%; border-radius: 3px; }
+  .batt-ok { background: #22c55e; }
+  .batt-low { background: #f59e0b; }
+  .batt-critical { background: #ef4444; }
+  .footer-row { display: flex; justify-content: space-between; font-size: .75rem; color: #64748b; margin-top: .5rem; }
+  .empty { text-align: center; color: #475569; padding: 3rem; grid-column: 1 / -1; }
+</style>
+</head>
+<body>
+<header>
+  <h1>&#x1F4E1; LoRa Sensor Station</h1>
+  <nav>
+    <a href="/api/sensors">API</a>
+    <a href="/api/config">Config</a>
+    <a href="/logout">Sign out</a>
+  </nav>
+</header>
+<main>
+  <h2>Sensor Nodes ({{ nodes | length }})</h2>
+  <div class="grid">
+    {% if not nodes %}
+      <div class="empty">No nodes detected yet.<br>Waiting for telemetry…</div>
+    {% endif %}
+    {% for n in nodes %}
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="node-id">Node {{ n.node_id }}</div>
+          <div class="meta">
+            {% if n.location %}{{ n.location }}{% if n.zone %} &bull; {{ n.zone }}{% endif %}{% else %}&mdash;{% endif %}
+          </div>
+        </div>
+        <span class="badge {% if n.online %}badge-online{% else %}badge-offline{% endif %}">
+          {{ 'Online' if n.online else 'Offline' }}
+        </span>
+      </div>
+
+      {% if n.values %}
+      <div class="values">
+        <table>
+          {% for name, v in n.values.items() %}
+          <tr>
+            <td>{{ name.replace('_', ' ').title() }}</td>
+            <td>{{ v.value }} {{ v.unit }}</td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+      {% endif %}
+
+      {% set batt = n.battery_percent %}
+      <div class="battery-bar">
+        <div class="battery-fill {% if batt <= 10 %}batt-critical{% elif batt <= 20 %}batt-low{% else %}batt-ok{% endif %}"
+             style="width: {{ batt }}%"></div>
+      </div>
+      <div class="footer-row">
+        <span>Battery {{ batt }}% {% if n.power_state == 1 %}&bull; Charging{% endif %}</span>
+        <span>{% if n.rssi is not none %}RSSI {{ n.rssi | int }} dBm{% endif %}</span>
+      </div>
+      <div class="meta" style="margin-top:.4rem">Last seen: {{ n.last_seen }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</main>
+</body>
+</html>

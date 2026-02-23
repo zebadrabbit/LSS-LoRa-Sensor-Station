@@ -1,0 +1,16 @@
+[Unit]
+Description=LSS Base Station
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/LSS/BaseStation
+ExecStart=/home/pi/LSS/venv/bin/python main.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

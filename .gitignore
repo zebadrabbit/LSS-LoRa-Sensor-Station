@@ -1,0 +1,76 @@
+# ============================================================
+# LSS — LoRa Sensor Station
+# Top-level .gitignore
+# ============================================================
+
+# ============================================================
+# Python / BaseStation
+# ============================================================
+
+# Byte-compiled / cached
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# MyPy / type check caches
+.mypy_cache/
+.dmypy.json
+
+# Runtime data (generated at runtime — never commit)
+BaseStation/data/sensors.db
+BaseStation/data/config.json
+BaseStation/data/*.log
+BaseStation/data/*.log.*
+
+# Editor
+.idea/
+*.swp
+*.swo
+.vscode/settings.json
+
+# ============================================================
+# PlatformIO / Arduino
+# ============================================================
+
+# PlatformIO build artefacts
+LSS-Arduino/.pio/
+
+# PlatformIO environment state
+LSS-Arduino/.pioenvs/
+LSS-Arduino/.piolibdeps/
+
+# Compiled output from Unity test runs
+LSS-Arduino/.pio/
+
+# ============================================================
+# OS artefacts
+# ============================================================
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================================
+# Secrets (never commit)
+# ============================================================
+
+*.env
+.env.*
+secrets.json
+credentials.json
