@@ -188,14 +188,21 @@ class LoRaManager:
 
             rssi = getattr(self._radio, "last_rssi", None)
             snr = getattr(self._radio, "last_snr", None)
-            self._dispatch(bytes(raw), rssi=rssi, snr=snr)
+            raw_bytes = bytes(raw)
+            logger.info(
+                "RX %d bytes  RSSI=%s SNR=%s  hex=%s",
+                len(raw_bytes), rssi, snr,
+                raw_bytes[:16].hex(),
+            )
+            self._dispatch(raw_bytes, rssi=rssi, snr=snr)
 
     def _dispatch(self, raw: bytes, rssi: Optional[float] = None,
                   snr: Optional[float] = None) -> None:
         """Route a raw packet to the correct parser and handler."""
         ptype = detect_packet_type(raw)
         if ptype is None:
-            logger.debug("Unrecognised packet (%d bytes)", len(raw))
+            logger.info("Unrecognised packet (%d bytes) — first 8: %s",
+                        len(raw), raw[:8].hex())
             return
 
         if ptype == cfg.PACKET_MULTI_SENSOR:
